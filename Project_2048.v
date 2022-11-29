@@ -12,7 +12,7 @@ reg [10:0] randCount;
 reg [1:0] counterMove, counterMerge;
 reg [3:0] buttonValue; 
 reg [5:0] state;
-
+reg flagDone;  
 reg [3:0] randNum;
 
 wire [191:0] MatrixCopy;   //Flatten out Matrix
@@ -62,6 +62,10 @@ ee201_debouncer ButtonUp(.CLK(SymClk), .RESET(Reset), .PB(btnU), .DPB(DPB), .SCE
 ee201_debouncer ButtonLeft(.CLK(SymClk), .RESET(Reset), .PB(btnL), .DPB(DPB), .SCEN(DbtnL), .MCEN(MCEN), .CCEN(CCEN));
 ee201_debouncer ButtonRight(.CLK(SymClk), .RESET(Reset), .PB(btnR), .DPB(DPB), .SCEN(DbtnR), .MCEN(MCEN), .CCEN(CCEN));
 	
+vga_demo VGATEST (.board_clk(SymClk), .vga_h_sync(vga_h_sync), .vga_v_sync(vga_v_sync),
+ .vga_r(vga_r), .vga_g(vga_g), .vga_b(vga_b), .reset(Reset),.Done(flagDone),.MatrixCopy(MatrixCopy),
+ .St_ce_bar(St_ce_bar), .St_rp_bar(St_rp_bar), .Mt_ce_bar(Mt_ce_bar), .Mt_St_oe_bar(Mt_St_oe_bar), .Mt_St_we_bar(Mt_St_we_bar));  //
+	
 	
 //Counter for Random Number
 always @ (posedge SymClk, posedge Reset)
@@ -93,7 +97,8 @@ always @ (posedge SymClk, posedge Reset)
 							randNum <= randCount[3:0];
 							
 							flagGen <= 1;
-							buttonValue <=0;
+							buttonValue <= 0;
+							flagDone <= 0;
 							for (i=0; i<16; i= i+1)
 								Matrix[i] <= 0;
 							Matrix[randCount[3:0]] <= 2;
@@ -121,7 +126,7 @@ always @ (posedge SymClk, posedge Reset)
 						if (DbtnR) buttonValue <= 4'b1000;
 
 						counterMove <= 0;
-						counterMerge <=0;
+						counterMerge <= 0;
 
 					Merge:
 						begin
@@ -137,24 +142,24 @@ always @ (posedge SymClk, posedge Reset)
 										begin
 											for (r = 0; r < 4; r = r + 1) // Check for every column
 												begin
-												if (Matrix[r][c] != 0) // If this square is not empty
+												if (Matrix[4*r+c] != 0) // If this square is not empty
 													begin 
 													counterMove = 1;  // A counter for how many numbered squares are on the right of this square
 													for (i = r + 1; i <= 3; i = i + 1) // Check all square on the right of our square
 														begin
-															if (Matrix[i][c] != 0) // If there is a square on our right that filled
+															if (Matrix[4*i+c] != 0) // If there is a square on our right that filled
 																begin
-																	if (Matrix[r][c] == Matrix[i][c]) // If that square is the same as ours, 
+																	if (Matrix[4*r+c] == Matrix[4*i+c]) // If that square is the same as ours, 
 																		begin
 																			// We merge
-																			Matrix[r][c] = Matrix[r][c] * 2; // Merging into our square
-																			Matrix[i][c] = 0; // Clearing that square
+																			Matrix[4*r+c] = Matrix[4*r+c] * 2; // Merging into our square
+																			Matrix[4*i+c] = 0; // Clearing that square
 																		end
 																	else // If that square is NOT the same as ours
 																		// Instead of merging, we move that square to the left
 																		begin
-																			Matrix[r + counterMove][c] = Matrix[i][c]; // Move that square to the CORRECT location
-																			Matrix[i][c] = 0; // Clear that square's original location
+																			Matrix[4*(r + counterMove)+c] = Matrix[4*i+c]; // Move that square to the CORRECT location
+																			Matrix[4*i+c] = 0; // Clear that square's original location
 																			counterMove = counterMove + 1; // Increment counter to mark CORRECT location for the next square on the right
 																		end
 																end
@@ -171,24 +176,24 @@ always @ (posedge SymClk, posedge Reset)
 										begin
 											for (r = 3; r >= 0; r = r - 1) // Check for every column
 												begin
-												if (Matrix[r][c] != 0) // If this square is not empty
+												if (Matrix[4*r+c] != 0) // If this square is not empty
 													begin 
 													counterMove = 1;  // A counter for how many numbered squares are on the right of this square
 													for (i = r - 1; i >= 0; i = i - 1) // Check all square on the right of our square
 														begin
-															if (Matrix[i][c] != 0) // If there is a square on our right that filled
+															if (Matrix[4*i+c] != 0) // If there is a square on our right that filled
 																begin
-																	if (Matrix[r][c] == Matrix[i][c]) // If that square is the same as ours, 
+																	if (Matrix[4*r+c] == Matrix[4*i+c]) // If that square is the same as ours, 
 																		begin
 																			// We merge
-																			Matrix[r][c] = Matrix[r][c] * 2; // Merging into our square
-																			Matrix[i][c] = 0; // Clearing that square
+																			Matrix[4*r+c] = Matrix[4*r+c] * 2; // Merging into our square
+																			Matrix[4*i+c] = 0; // Clearing that square
 																		end
 																	else // If that square is NOT the same as ours
 																		// Instead of merging, we move that square to the left
 																		begin
-																			Matrix[r - counterMove][c] = Matrix[i][c]; // Move that square to the CORRECT location
-																			Matrix[i][c] = 0; // Clear that square's original location
+																			Matrix[4*(r - counterMove)+c] = Matrix[4*i+c]; // Move that square to the CORRECT location
+																			Matrix[4*i+c] = 0; // Clear that square's original location
 																			counterMove = counterMove + 1; // Increment counter to mark CORRECT location for the next square on the right
 																		end
 																end
@@ -205,24 +210,24 @@ always @ (posedge SymClk, posedge Reset)
 										begin
 											for (c = 0; c < 4; c = c + 1) // Check for every column
 												begin
-												if (Matrix[r][c] != 0) // If this square is not empty
+												if (Matrix[4*r+c] != 0) // If this square is not empty
 													begin 
 													counterMove = 1;  // A counter for how many numbered squares are on the right of this square
 													for (i = c + 1; i <= 3; i = i + 1) // Check all square on the right of our square
 														begin
-															if (Matrix[r][i] != 0) // If there is a square on our right that filled
+															if (Matrix[4*r+i] != 0) // If there is a square on our right that filled
 																begin
-																	if (Matrix[r][c] == Matrix[r][i]) // If that square is the same as ours, 
+																	if (Matrix[4*r+c] == Matrix[4*r+i]) // If that square is the same as ours, 
 																		begin
 																			// We merge
-																			Matrix[r][c] = Matrix[r][c] * 2; // Merging into our square
-																			Matrix[r][i] = 0; // Clearing that square
+																			Matrix[4*r+c] = Matrix[4*r+c] * 2; // Merging into our square
+																			Matrix[4*r+i] = 0; // Clearing that square
 																		end
 																	else // If that square is NOT the same as ours
 																		// Instead of merging, we move that square to the left
 																		begin
-																			Matrix[r][c + counterMove] = Matrix[r][i]; // Move that square to the CORRECT location
-																			Matrix[r][i] = 0; // Clear that square's original location
+																			Matrix[4*r+c + counterMove] = Matrix[4*r+i]; // Move that square to the CORRECT location
+																			Matrix[4*r+i] = 0; // Clear that square's original location
 																			counterMove = counterMove + 1; // Increment counter to mark CORRECT location for the next square on the right
 																		end
 																end
@@ -239,24 +244,24 @@ always @ (posedge SymClk, posedge Reset)
 										begin
 											for (c = 3; c >= 0; c = c - 1) // Check for every column
 												begin
-												if (Matrix[r][c] != 0) // If this square is not empty
+												if (Matrix[4*r+c] != 0) // If this square is not empty
 													begin 
 													counterMove = 1;  // A counter for how many numbered squares are on the right of this square
 													for (i = c - 1; i >= 0; i = i - 1) // Check all square on the right of our square
 														begin
-															if (Matrix[r][i] != 0) // If there is a square on our right that filled
+															if (Matrix[4*r+i] != 0) // If there is a square on our right that filled
 																begin
-																	if (Matrix[r][c] == Matrix[r][i]) // If that square is the same as ours, 
+																	if (Matrix[4*r+c] == Matrix[4*r+i]) // If that square is the same as ours, 
 																		begin
 																			// We merge
-																			Matrix[r][c] = Matrix[r][c] * 2; // Merging into our square
-																			Matrix[r][i] = 0; // Clearing that square
+																			Matrix[4*r+c] = Matrix[4*r+c] * 2; // Merging into our square
+																			Matrix[4*r+i] = 0; // Clearing that square
 																		end
 																	else // If that square is NOT the same as ours
 																		// Instead of merging, we move that square to the left
 																		begin
-																			Matrix[r][c - counterMove] = Matrix[r][i]; // Move that square to the CORRECT location
-																			Matrix[r][i] = 0; // Clear that square's original location
+																			Matrix[4*r+c - counterMove] = Matrix[4*r+i]; // Move that square to the CORRECT location
+																			Matrix[4*r+i] = 0; // Clear that square's original location
 																			counterMove = counterMove + 1; // Increment counter to mark CORRECT location for the next square on the right
 																		end
 																end
@@ -272,6 +277,8 @@ always @ (posedge SymClk, posedge Reset)
 							//state transition
 							if (Ack)
 								state <= INI;
+
+							flagDone <= 1;
 						end
 					
 				endcase		
