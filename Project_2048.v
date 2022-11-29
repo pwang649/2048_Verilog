@@ -133,19 +133,33 @@ always @ (posedge SymClk, posedge Reset)
 							//UP MOVE
 							if (buttonValue == 4'b0001)  //UP Pressed
 								begin
-									for (i = 0; i < 4; i = i + 1)				
-										begin	
-											
-											for (j = 0; j < 4; j = j + 1)
+									for (c = 0; c < 4; c = c + 1) // Check for every row
+										begin
+											for (r = 0; r < 4; r = r + 1) // Check for every column
 												begin
-													if (Matrix[i+4*j] == 0)
-														counterMove = counterMove + 1;			
-													else if (counterMove !== 0)
+												if (Matrix[r][c] != 0) // If this square is not empty
+													begin 
+													counterMove = 1;  // A counter for how many numbered squares are on the right of this square
+													for (i = r + 1; i <= 3; i = i + 1) // Check all square on the right of our square
 														begin
-															Matrix[i+4*j-4*counterMove] = Matrix[i+4*j];
-															Matrix[i+4*j] = 0;
-														end
-													if (j == 3) counterMove = 0;
+															if (Matrix[i][c] != 0) // If there is a square on our right that filled
+																begin
+																	if (Matrix[r][c] == Matrix[i][c]) // If that square is the same as ours, 
+																		begin
+																			// We merge
+																			Matrix[r][c] = Matrix[r][c] * 2; // Merging into our square
+																			Matrix[i][c] = 0; // Clearing that square
+																		end
+																	else // If that square is NOT the same as ours
+																		// Instead of merging, we move that square to the left
+																		begin
+																			Matrix[r + counterMove][c] = Matrix[i][c]; // Move that square to the CORRECT location
+																			Matrix[i][c] = 0; // Clear that square's original location
+																			counterMove = counterMove + 1; // Increment counter to mark CORRECT location for the next square on the right
+																		end
+																end
+														end 
+													end 
 												end
 										end
 								end
@@ -153,24 +167,38 @@ always @ (posedge SymClk, posedge Reset)
 							//DOWN MOVE
 							if (buttonValue == 4'b0010)  //DOWN Pressed
 								begin
-									for (i = 0; i < 4; i = i + 1)				
-										begin	
-											
-											for (j = 3; j >= 0; j = j - 1)
+									for (c = 0; c < 4; c = c + 1) // Check for every row
+										begin
+											for (r = 3; r >= 0; r = r - 1) // Check for every column
 												begin
-													if (Matrix[i+4*j] == 0)
-														counterMove = counterMove + 1;			
-													else if (counterMove !== 0)
+												if (Matrix[r][c] != 0) // If this square is not empty
+													begin 
+													counterMove = 1;  // A counter for how many numbered squares are on the right of this square
+													for (i = r - 1; i >= 0; i = i - 1) // Check all square on the right of our square
 														begin
-															Matrix[i+4*j+4*counterMove] = Matrix[i+4*j];
-															Matrix[i+4*j] = 0;
-														end
-													if (j == 0) counterMove = 0;
+															if (Matrix[i][c] != 0) // If there is a square on our right that filled
+																begin
+																	if (Matrix[r][c] == Matrix[i][c]) // If that square is the same as ours, 
+																		begin
+																			// We merge
+																			Matrix[r][c] = Matrix[r][c] * 2; // Merging into our square
+																			Matrix[i][c] = 0; // Clearing that square
+																		end
+																	else // If that square is NOT the same as ours
+																		// Instead of merging, we move that square to the left
+																		begin
+																			Matrix[r - counterMove][c] = Matrix[i][c]; // Move that square to the CORRECT location
+																			Matrix[i][c] = 0; // Clear that square's original location
+																			counterMove = counterMove + 1; // Increment counter to mark CORRECT location for the next square on the right
+																		end
+																end
+														end 
+													end 
 												end
 										end
 								end
 								
-								//LEFT MOVE
+							//LEFT MOVE
 							if (buttonValue == 4'b0100)  //LEFT Pressed
 								begin
 									for (r = 0; r < 4; r = r + 1) // Check for every row
@@ -180,7 +208,7 @@ always @ (posedge SymClk, posedge Reset)
 												if (Matrix[r][c] != 0) // If this square is not empty
 													begin 
 													counterMove = 1;  // A counter for how many numbered squares are on the right of this square
-													for (i = (c + 1); c < 3; i = i + 1) // Check all square on the right of our square
+													for (i = c + 1; i <= 3; i = i + 1) // Check all square on the right of our square
 														begin
 															if (Matrix[r][i] != 0) // If there is a square on our right that filled
 																begin
@@ -201,152 +229,43 @@ always @ (posedge SymClk, posedge Reset)
 														end 
 													end 
 												end
-
-
-										end
-								end
-									for (j = 0; j < 4; j = j + 1)				
-										begin	
-											
-											for (i = 0; i < 4; i = i + 1)
-												begin
-													if (Matrix[i+4*j] == 0)
-														counterMove = counterMove + 1;			
-													else if (counterMove !== 0)
-														begin
-															Matrix[i+4*j-counterMove] = Matrix[i+4*j];
-															Matrix[i+4*j] = 0; 
-														end
-													if (i == 3) counterMove = 0;
-												end
 										end
 								end
 								
-								//RIGHT MOVE
-							if (buttonValue == 4'b1000)  //LEFT Pressed
+							//RIGHT MOVE
+							if (buttonValue == 4'b1000)  //RIGHT Pressed
 								begin
-									for (j = 0; j < 4; j = j + 1)				
-										begin	
-											
-											for (i = 3; i >= 0; i = i - 1)
+									for (r = 0; r < 4; r = r + 1) // Check for every row
+										begin
+											for (c = 3; c >= 0; c = c - 1) // Check for every column
 												begin
-													if (Matrix[i+4*j] == 0)
-														counterMove = counterMove + 1;			
-													else if (counterMove !== 0)
+												if (Matrix[r][c] != 0) // If this square is not empty
+													begin 
+													counterMove = 1;  // A counter for how many numbered squares are on the right of this square
+													for (i = c - 1; i >= 0; i = i - 1) // Check all square on the right of our square
 														begin
-															Matrix[i+4*j+counterMove] = Matrix[i+4*j];
-															Matrix[i+4*j] = 0; 
-														end
-													if (i == 0) counterMove = 0;
+															if (Matrix[r][i] != 0) // If there is a square on our right that filled
+																begin
+																	if (Matrix[r][c] == Matrix[r][i]) // If that square is the same as ours, 
+																		begin
+																			// We merge
+																			Matrix[r][c] = Matrix[r][c] * 2; // Merging into our square
+																			Matrix[r][i] = 0; // Clearing that square
+																		end
+																	else // If that square is NOT the same as ours
+																		// Instead of merging, we move that square to the left
+																		begin
+																			Matrix[r][c - counterMove] = Matrix[r][i]; // Move that square to the CORRECT location
+																			Matrix[r][i] = 0; // Clear that square's original location
+																			counterMove = counterMove + 1; // Increment counter to mark CORRECT location for the next square on the right
+																		end
+																end
+														end 
+													end 
 												end
 										end
 								end
 						end
-						
-					Merge:
-						begin
-							//state transition
-							state <= Gen;   
-							
-							//RTL
-							counterMerge = 0;
-							//UP Merge 
-							if (buttonValue == 4'b0001) 
-								begin
-										for (i = 0; i <4; i = i + 1)	
-											begin
-												for (j = 0; j < 3; j = j + 1)
-													begin
-														if (Matrix[i+4*j] == Matrix[i+4*j+4])
-														begin
-																Matrix[i+4*j] = 2*Matrix[i+4*j];
-																counterMerge = counterMerge + 1;	
-																Matrix[i+4*j+4] = 0;
-														end
-														if ((counterMerge !== 0) && (Matrix[i+4*j+4] !== 0))
-															begin
-																Matrix[i+4*j] = Matrix[i+4*j+4];
-																Matrix[i+4*j+4] = 0;
-															end
-														if (j == 2) counterMerge = 0;
-													end
-											end
-								end
-														
-							//Down Merge
-							if (buttonValue == 4'b0010) 
-								begin
-										for (i = 0; i <4; i = i + 1)	
-											begin
-												for (j = 3; j >0; j = j - 1)
-													begin
-														if (Matrix[i+4*j] == Matrix[i+4*j-4])
-														begin
-																Matrix[i+4*j] = 2*Matrix[i+4*j];
-																counterMerge = counterMerge + 1;	
-																Matrix[i+4*j-4] = 0;
-														end
-														if ((counterMerge !== 0) && (Matrix[i+4*j-4] !== 0))
-															begin
-																Matrix[i+4*j] = Matrix[i+4*j-4];
-																Matrix[i+4*j-4] = 0;
-															end
-														if (j == 1) counterMerge = 0;
-													end
-											end	
-								end
-								
-								
-								//LEFT Merge
-							if (buttonValue == 4'b0100) 
-								begin
-										for (j = 0; j <4; j = j + 1)	
-											begin
-												for (i = 0; i < 3; i = i + 1)
-													begin
-														if (Matrix[i+4*j] == Matrix[i+4*j+1])
-														begin
-																Matrix[i+4*j] = 2*Matrix[i+4*j];
-																counterMerge = counterMerge + 1;	
-																Matrix[i+4*j+1] = 0;
-														end
-														if ((counterMerge !== 0) && (Matrix[i+4*j+1] !== 0))
-															begin
-																Matrix[i+4*j] = Matrix[i+4*j+1];
-																Matrix[i+4*j+1] = 0;
-															end
-														if (i == 2) counterMerge = 0;
-													end
-											end
-								end
-								
-							//Right Merge	
-							if (buttonValue == 4'b1000)
-								begin
-										for (j = 0; j <4; j = j + 1)	
-											begin
-												for (i = 3; i > 0; i = i - 1)
-													begin
-														if (Matrix[i+4*j] == Matrix[i+4*j-1])
-														begin
-																Matrix[i+4*j] = 2*Matrix[i+4*j];
-																counterMerge = counterMerge + 1;	
-																Matrix[i+4*j-1] = 0;
-														end
-														if ((counterMerge !== 0) && (Matrix[i+4*j-1] !== 0))
-															begin
-																Matrix[i+4*j] = Matrix[i+4*j-1];
-																Matrix[i+4*j-1] = 0;
-															end
-														if (i == 1) counterMerge = 0;
-													end
-											end	
-								end
-						
-						buttonValue <= 0;
-						end
-						
-						
 						
 					Done:
 						begin
